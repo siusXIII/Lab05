@@ -50,9 +50,14 @@ class Controller:
             self._view.update_page()
             return
         for s in studenti:
-            if s.matricola == int(self._view._matr.value):
-                self._view._nome.value = s.nome
-                self._view._cognome.value = s.cognome
+            try:
+                if s.matricola == int(self._view._matr.value):
+                    self._view._nome.value = s.nome
+                    self._view._cognome.value = s.cognome
+                    self._view.update_page()
+                    return
+            except ValueError:
+                self._view.create_alert("La matricola inserita non è nel formato corretto!")
                 self._view.update_page()
                 return
         self._view.create_alert("Matricola non presente!")
@@ -61,9 +66,14 @@ class Controller:
     def handleCorso(self,e):
         matricola=self._view._matr.value
         if matricola == "":
-            self._view.create_alert("inserire una matricola")
+            self._view.create_alert("Inserire una matricola!")
             return
-        corsi = self._model.getCorsoByStudenti(int(matricola))
+        try:
+            corsi = self._model.getCorsoByStudenti(int(matricola))
+        except ValueError:
+            self._view.create_alert("La matricola inserita non è nel formato corretto!")
+            self._view.update_page()
+            return
         if len(corsi) == 0:
             self._view.create_alert("La matricola indicata non risulta iscritta ad alcun corso")
         else:
@@ -76,29 +86,29 @@ class Controller:
     def handleIscrivi(self, e):
         matricola = self._view._matr.value
         if matricola == "":
-            self._view.create_alert("inserire una matricola")
+            self._view.create_alert("Inserire una matricola!")
             return
         studente = self._model.cercaStudente(matricola)
         if studente is None:
-            self._view.create_alert("Matricola non presente nel database")
+            self._view.create_alert("Matricola non presente nel database!")
             return
         codice_corso = self._view._dd.value
         if codice_corso is None:
             self._view.create_alert("Selezionare un corso!")
             return
         corsi = self._model.getCorsoByStudenti(int(matricola))
+        inizio = codice_corso.find("(") + 1
+        fine = codice_corso.find(")")
+        codice = codice_corso[inizio:fine]
         presente = False
         for i in corsi:
-            if i.codins == codice_corso:
+            if i.codins == codice:
                 presente = True
-        if not presente:
+        if presente:
             self._view.txt_result.controls.clear()
             self._view.txt_result.controls.append(ft.Text("Iscrizione fallita"))
             self._view.update_page()
             return
-        inizio = codice_corso.find("(") + 1
-        fine = codice_corso.find(")")
-        codice = codice_corso[inizio:fine]
         result = self._model.iscrivi_corso(matricola, codice)
         self._view.txt_result.controls.clear()
         if result:
